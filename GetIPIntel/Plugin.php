@@ -61,6 +61,10 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
         $sslSwitch = new Typecho_Widget_Helper_Form_Element_Radio('sslSwitch', array("https" => "开启", "http" => "关闭"), "https",
 			_t('HTTPS 连接'), "用 HTTPS 连接 GetIPIntel，国内服务器必须开启");
         $form->addInput($sslSwitch);
+
+        $failAction = new Typecho_Widget_Helper_Form_Element_Radio('failAction', array("pass" => "不操作", "fail" => "提交失败"), "pass",
+			_t('失败操作'), "连接 GetIPIntel 失败时的操作");
+        $form->addInput($failAction);
 	}
     
     /**
@@ -86,11 +90,17 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
         } else {
             $possibility = file_get_contents($protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email . "&flags=" . $pluginOptions->apiMode);
         }
-		if(!$possibility) {
+		if($possibility === false) {
 			/* GetIPIntel service died */
-			$possibility = 0;
+            switch($pluginOptions->failAction) {
+                case 'pass':
+			        $possibility = 0;
+                    break;
+                case 'fail':
+                    throw new Typecho_Widget_Exception('抱歉，暂时无法连接到评论反欺诈服务，请稍后再试。');
+                    break;
+            }
 		}
-
 		if($possibility >= $pluginOptions->apiThreshold) {
 			/* trigger failure */
 			switch($pluginOptions->apiAction) {
