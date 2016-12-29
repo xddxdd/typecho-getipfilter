@@ -57,6 +57,10 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
         $apiAction = new Typecho_Widget_Helper_Form_Element_Radio('apiAction', array("n" => "不操作", "c" => "人工审核", "s" => "垃圾评论", "f" => "提交失败"), "s",
 			_t('代理操作'), "发现用户使用代理时的操作");
         $form->addInput($apiAction);
+
+        $sslSwitch = new Typecho_Widget_Helper_Form_Element_Radio('sslSwitch', array("https" => "开启", "http" => "关闭"), "https",
+			_t('HTTPS 连接'), "用 HTTPS 连接 GetIPIntel，国内服务器必须开启");
+        $form->addInput($sslSwitch);
 	}
     
     /**
@@ -76,10 +80,11 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
 		$pluginOptions = Typecho_Widget::widget('Widget_Options')->plugin('GetIPIntel');
 		$email = $pluginOptions->apiEmail;
 		$ip = $_SERVER['REMOTE_ADDR'];
+        $protocol = $pluginOptions->sslSwitch . "://";
         if($pluginOptions->apiMode == '') {
-            $possibility = file_get_contents("https://check.getipintel.net/check.php?ip=$ip&contact=$email");
+            $possibility = file_get_contents($protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email);
         } else {
-            $possibility = file_get_contents("https://check.getipintel.net/check.php?ip=$ip&contact=$email&flags=" . $pluginOptions->apiMode);
+            $possibility = file_get_contents($protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email . "&flags=" . $pluginOptions->apiMode);
         }
 		if(!$possibility) {
 			/* GetIPIntel service died */
