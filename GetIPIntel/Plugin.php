@@ -46,8 +46,8 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
         	_t('邮件地址'), "你的邮件地址。GetIPIntel 可能会向你发信验证邮件地址。如果你未能在 48 小时内回复邮件，你的服务器 IP 可能被屏蔽。");
 		$form->addInput($apiEmail);
 
-        $apiMode = new Typecho_Widget_Helper_Form_Element_Radio('apiMode', array("m" => "仅黑名单", "b" => "快速检查", "f" => "全面检查"), "m",
-			_t('模式'), "设置检查的模式。<br />仅黑名单：快速（60ms），漏过率高，误报率低<br />快速检查：较快（130ms），漏过率低，误报率高<br />全面检查：很慢（5s），漏过率低，误报率高");
+        $apiMode = new Typecho_Widget_Helper_Form_Element_Radio('apiMode', array("m" => "仅黑名单", "b" => "快速检查", "" => "默认模式", "f" => "全面检查"), "m",
+			_t('模式'), "设置检查的模式。<br />仅黑名单：快速（60ms），漏过率高，误报率低<br />快速检查：较快（130ms），漏过率低，误报率高<br />默认模式：首次评论快速检查，GetIPIntel 后台全面检查，短时间再次评论加载全面检查数据<br />全面检查：很慢（5s），漏过率低，误报率高");
         $form->addInput($apiMode);
         
         $apiThreshold = new Typecho_Widget_Helper_Form_Element_Text('apiThreshold', NULL, '0.99',
@@ -55,7 +55,7 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
 		$form->addInput($apiThreshold);
 
         $apiAction = new Typecho_Widget_Helper_Form_Element_Radio('apiAction', array("n" => "不操作", "c" => "人工审核", "s" => "垃圾评论", "f" => "提交失败"), "s",
-			_t('验证失败操作'), "发现用户使用代理时的操作");
+			_t('代理操作'), "发现用户使用代理时的操作");
         $form->addInput($apiAction);
 	}
     
@@ -76,7 +76,11 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
 		$pluginOptions = Typecho_Widget::widget('Widget_Options')->plugin('GetIPIntel');
 		$email = $pluginOptions->apiEmail;
 		$ip = $_SERVER['REMOTE_ADDR'];
-		$possibility = file_get_contents("http://check.getipintel.net/check.php?ip=$ip&contact=$email&flags=" . $pluginOptions->apiMode);
+        if($pluginOptions->apiMode == '') {
+            $possibility = file_get_contents("https://check.getipintel.net/check.php?ip=$ip&contact=$email");
+        } else {
+            $possibility = file_get_contents("https://check.getipintel.net/check.php?ip=$ip&contact=$email&flags=" . $pluginOptions->apiMode);
+        }
 		if(!$possibility) {
 			/* GetIPIntel service died */
 			$possibility = 0;
