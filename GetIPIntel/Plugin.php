@@ -86,11 +86,16 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
 		$ip = $_SERVER['REMOTE_ADDR'];
         $protocol = $pluginOptions->sslSwitch . "://";
         if($pluginOptions->apiMode == '') {
-            $possibility = file_get_contents($protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email);
+            $url = $protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email;
         } else {
-            $possibility = file_get_contents($protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email . "&flags=" . $pluginOptions->apiMode);
+            $url = $protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email . "&flags=" . $pluginOptions->apiMode;
         }
-		if($possibility === false) {
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        $possibility = curl_exec($ch);
+        curl_close($ch);
+		if($possibility === false || $possibility < 0 || $possibility == '') {
 			/* GetIPIntel service died */
             switch($pluginOptions->failAction) {
                 case 'pass':
