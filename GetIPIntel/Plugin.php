@@ -84,6 +84,7 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
 		$pluginOptions = Typecho_Widget::widget('Widget_Options')->plugin('GetIPIntel');
 		$email = $pluginOptions->apiEmail;
 		$ip = $_SERVER['REMOTE_ADDR'];
+		$ip = str_replace('::ffff:', '', $ip);
         $protocol = $pluginOptions->sslSwitch . "://";
         if($pluginOptions->apiMode == '') {
             $url = $protocol . "check.getipintel.net/check.php?ip=" . $ip . "&contact=" . $email;
@@ -92,7 +93,8 @@ class GetIPIntel_Plugin implements Typecho_Plugin_Interface
         }
 		$ch = curl_init($url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         $possibility = curl_exec($ch);
         curl_close($ch);
 		if($possibility === false || $possibility < 0 || $possibility == '') {
